@@ -1,0 +1,38 @@
+{
+  "name": "acceleration",
+  "version": "0.1.0",
+  "description": "Acceleration Templating Language",
+  "author": "Colin J. Ihrig <cjihrig@gmail.com> (http://www.cjihrig.com/)",
+  "main": "lib/index.js",
+  "homepage": "https://github.com/cjihrig/acceleration#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cjihrig/acceleration.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cjihrig/acceleration/issues"
+  },
+  "license": "MIT",
+  "scripts": {
+    "lint": "belly-button -f",
+    "pretest": "npm run lint",
+    "test": "lab -v -t 100"
+  },
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "dependencies": {
+    "acorn": "8.7.0",
+    "acorn-walk": "8.2.0"
+  },
+  "devDependencies": {
+    "@hapi/lab": "24.x.x",
+    "belly-button": "8.0.0-beta.1"
+  },
+  "keywords": [
+    "acceleration",
+    "templating",
+    "velocity",
+    "vtl"
+  ]
+}
