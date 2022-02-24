@@ -106,6 +106,57 @@ describe('Transpilation', () => {
         #set( $value1 = $foo.bar().baz )
         #set( $value2 = $foo.bar().baz().abc )
       `
+    },
+
+    {
+      name: 'switch statement',
+      source: `
+        let value = 0;
+
+        switch (foo) {
+          case 1:
+            value = 1;
+            break;
+          case 2:
+            value = 2;
+            break;
+          case 3:
+          case 4:
+            value = 7;
+          default:
+            value = 99;
+        }
+      `,
+      expected: `
+        #set( $value = 0 )
+        #set( $matched = false )
+        #set( $fallthrough = false )
+        #set( $discriminant = foo )
+        #if( $fallthrough || $discriminant === 1 )
+          #set( $value = 1 )
+          #set( $matched = true )
+          #set( $fallthrough = false )
+        #end
+        #if( $fallthrough || $discriminant === 2 )
+          #set( $value = 2 )
+          #set( $matched = true )
+          #set( $fallthrough = false )
+        #end
+        #if( $fallthrough || $discriminant === 3 )
+          #set( $matched = true )
+          #set( $fallthrough = true )
+        #end
+        #if( $fallthrough || $discriminant === 4 )
+          #set( $value = 7 )
+          #set( $matched = true )
+          #set( $fallthrough = true )
+        #end
+        #if( $fallthrough || !$matched )
+          #set( $value = 99 )
+          #set( $matched = true )
+          #set( $fallthrough = true )
+        #end
+      `
     }
   ];
 
@@ -128,7 +179,7 @@ function dedent(str) {
     lines.shift();
   }
 
-  if (lines[lines.length - 1].trim() === '') {
+  if (lines.length > 0 && lines[lines.length - 1].trim() === '') {
     lines.pop();
   }
 
