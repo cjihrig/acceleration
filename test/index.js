@@ -1,6 +1,5 @@
 'use strict';
 const Assert = require('assert');
-const { EOL } = require('os');
 const Lab = require('@hapi/lab');
 const { describe, it } = exports.lab = Lab.script();
 const { transpile } = require('..');
@@ -288,7 +287,7 @@ describe('Transpilation', () => {
 
 
 function dedent(str) {
-  const lines = str.split(EOL);
+  const lines = str.split('\n');
   let minIndent = Infinity;
 
   if (lines[0].trim() === '') {
@@ -309,5 +308,5 @@ function dedent(str) {
     lines[i] = lines[i].slice(minIndent);
   }
 
-  return lines.join(EOL).trimRight();
+  return lines.join('\n').trimRight();
 }
