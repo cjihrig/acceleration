@@ -132,21 +132,21 @@ describe('Transpilation', () => {
         #set( $matched = false )
         #set( $fallthrough = false )
         #set( $discriminant = foo )
-        #if( $fallthrough || $discriminant === 1 )
+        #if( $fallthrough || $discriminant == 1 )
           #set( $value = 1 )
           #set( $matched = true )
           #set( $fallthrough = false )
         #end
-        #if( $fallthrough || $discriminant === 2 )
+        #if( $fallthrough || $discriminant == 2 )
           #set( $value = 2 )
           #set( $matched = true )
           #set( $fallthrough = false )
         #end
-        #if( $fallthrough || $discriminant === 3 )
+        #if( $fallthrough || $discriminant == 3 )
           #set( $matched = true )
           #set( $fallthrough = true )
         #end
-        #if( $fallthrough || $discriminant === 4 )
+        #if( $fallthrough || $discriminant == 4 )
           #set( $value = 7 )
           #set( $matched = true )
           #set( $fallthrough = true )
@@ -157,15 +157,131 @@ describe('Transpilation', () => {
           #set( $fallthrough = true )
         #end
       `
+    },
+
+    {
+      name: 'try...catch statement',
+      source: `
+        try {
+
+        } catch (err) {
+
+        }
+      `,
+      error: /Line 2, column 9: 'try\.\.\.catch' statements are not supported/
+    },
+
+    {
+      name: 'debugger statement',
+      source: `
+        debugger;
+      `,
+      error: /Line 2, column 9: 'debugger' statements are not supported/
+    },
+
+    {
+      name: 'do...while loop',
+      source: `
+        do {
+
+        } while (true)
+      `,
+      error: /Line 2, column 9: 'do\.\.\.while' loops are not supported/
+    },
+
+    {
+      name: 'for...in loop',
+      source: `
+        for (const property in object) {
+
+        }
+      `,
+      error: /Line 2, column 9: 'for\.\.\.in' loops are not supported/
+    },
+
+    {
+      name: 'for loop',
+      source: `
+        for (let i = 0; i < foo.length; i++) {
+
+        }
+      `,
+      error: /Line 2, column 9: 'for' loops are not supported/
+    },
+
+    {
+      name: 'function declaration',
+      source: `
+        function foo() {}
+      `,
+      error: /Line 2, column 9: function declarations are not supported/
+    },
+
+    {
+      name: 'function expression',
+      source: `
+        const foo = function foo() {};
+      `,
+      error: /Line 2, column 21: function expressions are not supported/
+    },
+
+    {
+      name: 'this expression',
+      source: `
+        const foo = this.bar();
+      `,
+      error: /Line 2, column 21: 'this' expressions are not supported/
+    },
+
+    {
+      name: 'throw statement',
+      source: `
+        throw new Error('oh no');
+      `,
+      error: /Line 2, column 9: 'throw' statements are not supported/
+    },
+
+    {
+      name: 'while loop',
+      source: `
+        while (true) {
+
+        }
+      `,
+      error: /Line 2, column 9: 'while' loops are not supported/
+    },
+
+    {
+      name: 'with statement',
+      source: `
+        with (foo) {
+
+        }
+      `,
+      error: /Line 2, column 9: 'with' statements are not supported/
+    },
+
+    {
+      name: 'symbol data types',
+      source: `
+        const foo = Symbol();
+      `,
+      error: /Line 2, column 21: symbol data types are not supported/
     }
   ];
 
   for (const test of transpilationTests) {
     it(test.name, () => {
-      const actual = dedent(transpile(test.source));
-      const expected = dedent(test.expected);
+      if (test.error) {
+        Assert.throws(() => {
+          transpile(test.source);
+        }, test.error);
+      } else {
+        const actual = dedent(transpile(test.source));
+        const expected = dedent(test.expected);
 
-      Assert.strictEqual(actual, expected);
+        Assert.strictEqual(actual, expected);
+      }
     });
   }
 });
