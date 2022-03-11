@@ -165,12 +165,22 @@ describe('Transpilation', () => {
         const value0 = foo.bar();
         const value1 = foo.bar().baz;
         const value2 = foo.bar().baz().abc;
+        const value3 = foo.bar(3, true, 'str', value0, 1 + foo);
       `,
       expected: `
         #set( $value0 = $foo.bar() )
         #set( $value1 = $foo.bar().baz )
         #set( $value2 = $foo.bar().baz().abc )
+        #set( $value3 = $foo.bar(3, true, 'str', $value0, 1 + $foo) )
       `
+    },
+
+    {
+      name: 'non-method function call',
+      source: `
+        foo();
+      `,
+      error: /Line 2, column 9: non-method functions are not supported: foo/
     },
 
     {
