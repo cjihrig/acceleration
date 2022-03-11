@@ -342,6 +342,35 @@ describe('Transpilation', () => {
         const foo = Symbol();
       `,
       error: /Line 2, column 21: symbol data types are not supported/
+    },
+
+    {
+      // TODO(cjihrig): Handle 'use strict' better, as well as the double $$.
+      name: 'expression statement',
+      source: `
+        'use strict';
+        $ctx.stash.put(
+          "defaultValues",
+          $util.defaultIfNull($ctx.stash.defaultValues, {})
+        )
+        const createdAt = $util.time.nowISO8601();
+        $ctx.stash.defaultValues.put("id", $util.autoId());
+        $ctx.stash.defaultValues.put("createdAt", createdAt);
+        $util.qr($ctx.stash.defaultValues.put("updatedAt", createdAt))
+        $util.toJson({
+          "version": "2018-05-29",
+          "payload": {}
+        })
+      `,
+      expected: `
+        #set( $discard = 'use strict' )
+        #set( $discard = $$ctx.stash.put('defaultValues', $$util.defaultIfNull($$ctx.stash.defaultValues, {})) )
+        #set( $createdAt = $$util.time.nowISO8601() )
+        #set( $discard = $$ctx.stash.defaultValues.put('id', $$util.autoId()) )
+        #set( $discard = $$ctx.stash.defaultValues.put('createdAt', $createdAt) )
+        #set( $discard = $$util.qr($$ctx.stash.defaultValues.put('updatedAt', $createdAt)) )
+        #set( $discard = $$util.toJson({'version': '2018-05-29', 'payload': {}}) )
+      `
     }
   ];
 
