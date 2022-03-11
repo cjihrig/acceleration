@@ -94,6 +94,26 @@ describe('Transpilation', () => {
     },
 
     {
+      name: 'array expression',
+      source: `
+        const arr0 = [];
+        const arr1 = [1, 'two', obj0, false, 1 + foo];
+      `,
+      expected: `
+        #set( $arr0 = [] )
+        #set( $arr1 = [1, 'two', $obj0, false, 1 + $foo] )
+      `
+    },
+
+    {
+      name: 'array expression hole',
+      source: `
+        const arr2 = [1, , 2];
+      `,
+      error: /Line 2, column 22: array holes are not supported/
+    },
+
+    {
       name: 'object expression',
       source: `
         const obj0 = {};
