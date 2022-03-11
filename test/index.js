@@ -55,9 +55,9 @@ describe('Transpilation', () => {
         }
       `,
       expected: `
-        #if( foo === 1 )
+        #if( $foo === 1 )
           #set( $bar = 'def' )
-        #elseif( foo === 2 )
+        #elseif( $foo === 2 )
           #set( $bar = 'ghi' )
         #else
           #set( $bar = 'xyz' )
@@ -91,6 +91,52 @@ describe('Transpilation', () => {
         #set( $value1 = $foo.bar.baz )
         #set( $value2 = $foo.bar.baz.abc )
       `
+    },
+
+    {
+      name: 'object expression',
+      source: `
+        const obj0 = {};
+        const obj1 = { p0: 1, p1: 'two', p2: obj0, p3: false };
+        const obj2 = { p0: 1 + foo };
+      `,
+      expected: `
+        #set( $obj0 = {} )
+        #set( $obj1 = {'p0': 1, 'p1': 'two', 'p2': $obj0, 'p3': false} )
+        #set( $obj2 = {'p0': 1 + $foo} )
+      `
+    },
+
+    {
+      name: 'object expression method',
+      source: `
+        const obj = { method() {} };
+      `,
+      error: /Line 2, column 23: methods \('method'\) are not supported/
+    },
+
+    {
+      name: 'object expression getter',
+      source: `
+        const obj = { get property() {} };
+      `,
+      error: /Line 2, column 23: getters \('property'\) are not supported/
+    },
+
+    {
+      name: 'object expression setter',
+      source: `
+        const obj = { set property(arg) {} };
+      `,
+      error: /Line 2, column 23: setters \('property'\) are not supported/
+    },
+
+    {
+      name: 'object expression computed property',
+      source: `
+        const obj = { ['computed']: 5 };
+      `,
+      error: /Line 2, column 23: computed properties are not supported/
     },
 
     {
