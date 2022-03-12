@@ -396,14 +396,22 @@ describe('Transpilation', () => {
     },
 
     {
+      name: 'injected global variables',
+      env: { globals: ['global'] },
+      source: `
+        global = 0;
+      `,
+      expected: `
+        #set( $global = 0 )
+      `
+    },
+
+    {
       // TODO(cjihrig): Handle 'use strict' better, as well as the double $$.
-      // TODO(cjihrig): Should not need to declare $ctx and $util.
+      // TODO(cjihrig): $ctx and $util should need to be provided as globals.
       name: 'expression statement',
       source: `
         'use strict';
-        const $ctx = {};
-        const $util = {};
-
         $ctx.stash.put(
           "defaultValues",
           $util.defaultIfNull($ctx.stash.defaultValues, {})
@@ -419,8 +427,6 @@ describe('Transpilation', () => {
       `,
       expected: `
         #set( $discard = 'use strict' )
-        #set( $$ctx = {} )
-        #set( $$util = {} )
         #set( $discard = $$ctx.stash.put('defaultValues', $$util.defaultIfNull($$ctx.stash.defaultValues, {})) )
         #set( $createdAt = $$util.time.nowISO8601() )
         #set( $discard = $$ctx.stash.defaultValues.put('id', $$util.autoId()) )
@@ -435,10 +441,10 @@ describe('Transpilation', () => {
     it(test.name, () => {
       if (test.error) {
         Assert.throws(() => {
-          transpile(test.source);
+          transpile(test.source, test.env);
         }, test.error);
       } else {
-        const actual = dedent(transpile(test.source));
+        const actual = dedent(transpile(test.source, test.env));
         const expected = dedent(test.expected);
 
         Assert.strictEqual(actual, expected);
