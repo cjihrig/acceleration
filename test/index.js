@@ -46,6 +46,8 @@ describe('Transpilation', () => {
     {
       name: 'if...else if...else statement',
       source: `
+        const foo = 3;
+
         if (foo === 1) {
           const bar = 'def';
         } else if (foo === 2) {
@@ -55,12 +57,13 @@ describe('Transpilation', () => {
         }
       `,
       expected: `
+        #set( $foo = 3 )
         #if( $foo === 1 )
           #set( $bar = 'def' )
         #elseif( $foo === 2 )
-          #set( $bar = 'ghi' )
+          #set( $bar_1 = 'ghi' )
         #else
-          #set( $bar = 'xyz' )
+          #set( $bar_2 = 'xyz' )
         #end
       `
     },
@@ -68,11 +71,14 @@ describe('Transpilation', () => {
     {
       name: 'for...of statement',
       source: `
+        const array = [];
+
         for (const item of array) {
           const foo = 0xf;
         }
       `,
       expected: `
+        #set( $array = [] )
         #foreach( $item in $array )
           #set( $foo = 15 )
         #end
@@ -97,11 +103,11 @@ describe('Transpilation', () => {
       name: 'array expression',
       source: `
         const arr0 = [];
-        const arr1 = [1, 'two', obj0, false, 1 + foo];
+        const arr1 = [1, 'two', arr0, false, 1 + arr0];
       `,
       expected: `
         #set( $arr0 = [] )
-        #set( $arr1 = [1, 'two', $obj0, false, 1 + $foo] )
+        #set( $arr1 = [1, 'two', $arr0, false, 1 + $arr0] )
       `
     },
 
@@ -118,12 +124,12 @@ describe('Transpilation', () => {
       source: `
         const obj0 = {};
         const obj1 = { p0: 1, p1: 'two', p2: obj0, p3: false };
-        const obj2 = { p0: 1 + foo };
+        const obj2 = { p0: 1 + obj0 };
       `,
       expected: `
         #set( $obj0 = {} )
         #set( $obj1 = {'p0': 1, 'p1': 'two', 'p2': $obj0, 'p3': false} )
-        #set( $obj2 = {'p0': 1 + $foo} )
+        #set( $obj2 = {'p0': 1 + $obj0} )
       `
     },
 
@@ -165,13 +171,13 @@ describe('Transpilation', () => {
         const value0 = foo.bar();
         const value1 = foo.bar().baz;
         const value2 = foo.bar().baz().abc;
-        const value3 = foo.bar(3, true, 'str', value0, 1 + foo);
+        const value3 = foo.bar(3, true, 'str', value0, 1 + value0);
       `,
       expected: `
         #set( $value0 = $foo.bar() )
         #set( $value1 = $foo.bar().baz )
         #set( $value2 = $foo.bar().baz().abc )
-        #set( $value3 = $foo.bar(3, true, 'str', $value0, 1 + $foo) )
+        #set( $value3 = $foo.bar(3, true, 'str', $value0, 1 + $value0) )
       `
     },
 
@@ -186,6 +192,7 @@ describe('Transpilation', () => {
     {
       name: 'switch statement',
       source: `
+        let foo = 5;
         let value = 0;
 
         switch (foo) {
@@ -203,6 +210,7 @@ describe('Transpilation', () => {
         }
       `,
       expected: `
+        #set( $foo = 5 )
         #set( $value = 0 )
         #set( $matched = false )
         #set( $fallthrough = false )
@@ -337,7 +345,7 @@ describe('Transpilation', () => {
     },
 
     {
-      name: 'symbol data types',
+      name: 'symbol data type',
       source: `
         const foo = Symbol();
       `,
@@ -345,10 +353,57 @@ describe('Transpilation', () => {
     },
 
     {
+      name: 'use of undeclared variable',
+      source: `
+        const foo = bar + baz;
+      `,
+      error: /Line 2, column 21: variable 'bar' was not declared/
+    },
+
+    {
+      name: 'assignment to undeclared variable',
+      source: `
+        foo = 1;
+      `,
+      error: /Line 2, column 9: variable 'foo' was not declared/
+    },
+
+    {
+      name: 'variable versions due to scope',
+      source: `
+        const a = 0;
+        let c = 6;
+
+        {
+          const a = 1;
+          let b = 2;
+
+          b = a + b + 3 + c;
+          c = 7;
+        }
+
+        const b = 4 + a + c;
+      `,
+      expected: `
+        #set( $a = 0 )
+        #set( $c = 6 )
+        #set( $a_1 = 1 )
+        #set( $b = 2 )
+        #set( $b = $a_1 + $b + 3 + $c )
+        #set( $c = 7 )
+        #set( $b_1 = 4 + $a + $c )
+      `
+    },
+
+    {
       // TODO(cjihrig): Handle 'use strict' better, as well as the double $$.
+      // TODO(cjihrig): Should not need to declare $ctx and $util.
       name: 'expression statement',
       source: `
         'use strict';
+        const $ctx = {};
+        const $util = {};
+
         $ctx.stash.put(
           "defaultValues",
           $util.defaultIfNull($ctx.stash.defaultValues, {})
@@ -364,6 +419,8 @@ describe('Transpilation', () => {
       `,
       expected: `
         #set( $discard = 'use strict' )
+        #set( $$ctx = {} )
+        #set( $$util = {} )
         #set( $discard = $$ctx.stash.put('defaultValues', $$util.defaultIfNull($$ctx.stash.defaultValues, {})) )
         #set( $createdAt = $$util.time.nowISO8601() )
         #set( $discard = $$ctx.stash.defaultValues.put('id', $$util.autoId()) )
